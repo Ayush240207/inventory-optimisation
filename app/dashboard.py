@@ -34,7 +34,7 @@ with st.sidebar:
     default_lead_time = st.number_input("Lead time (days)", min_value=1, max_value=90, value=21)
     default_moq = st.number_input("Minimum order quantity", min_value=1, max_value=500, value=60)
     st.divider()
-    template_path = "/Users/headofthetable/inventory-optimisation/data/raw/retailer_template.xlsx"
+    template_path = "data/raw/retailer_template.xlsx"
     with open(template_path, "rb") as f:
         st.download_button("Download Template", data=f.read(), file_name="retailer_template.xlsx")
 
