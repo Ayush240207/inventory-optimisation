@@ -8,6 +8,9 @@ A universal inventory optimisation tool for small retail businesses. Upload your
 - **Inventory Status** — live stock status showing days of cover for every product
 - **Order Recommendations** — exact order quantities with working capital estimates and what-if scenarios
 
+## Live Demo
+https://inventory-optimisation-btjbzrjcexaelm8bcvycwx.streamlit.app/
+
 ## How To Run
 
 ```bash
