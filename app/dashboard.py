@@ -443,6 +443,13 @@ else:
             reco["Buffer_Stock"] = (1.65 * reco["Std_Daily"] * np.sqrt(adj_lead)).round(0)
             reco["Order_Trigger"] = (reco["Daily_Sales_Rate"] * adj_lead + reco["Buffer_Stock"]).round(0)
             reco["Forecast_30_Days"] = (reco["Daily_Sales_Rate"] * 30 * (1 + demand_pct)).round(0)
+            reco["Forecast_Lower"] = (reco["Forecast_30_Days"] - 1.65 * reco["Std_Daily"] * (30**0.5)).clip(lower=0).round(0)
+            reco["Forecast_Upper"] = (reco["Forecast_30_Days"] + 1.65 * reco["Std_Daily"] * (30**0.5)).round(0)
+            reco["CV"] = np.where(reco["Daily_Sales_Rate"] > 0, reco["Std_Daily"] / reco["Daily_Sales_Rate"], 1)
+            reco["Confidence"] = np.where(reco["CV"] < 0.2, "🟢 High", np.where(reco["CV"] < 0.5, "🟡 Medium", "🔴 Low"))
+            reco["Forecast_Lower"] = reco["Forecast_Lower"].fillna(0)
+            reco["Forecast_Upper"] = reco["Forecast_Upper"].fillna(0)
+            reco["Forecast_Range"] = reco["Forecast_Lower"].astype(int).astype(str) + " — " + reco["Forecast_Upper"].astype(int).astype(str) + " units"
             reco["Units_to_Order"] = (reco["Forecast_30_Days"] + reco["Buffer_Stock"] - reco["Units_On_Hand"] - reco["Units_On_Order"]).clip(lower=0)
             reco["Units_to_Order"] = reco[["Units_to_Order","MOQ"]].max(axis=1).round(0)
             reco["Units_to_Order"] = reco[["Units_to_Order","Order_Trigger"]].max(axis=1).round(0)
@@ -496,11 +503,11 @@ else:
                 "Units_On_Hand":"Stock on Hand","Days_of_Stock_Left":"Days of Stock Left",
                 "Forecast_30_Days":"Forecast (30 days)","Buffer_Stock":"Buffer Stock",
                 "Units_On_Order":"Already Ordered","Units_to_Order":"Order This Many",
-                "Amount_to_Spend":"Amount to Spend (Rs)","Priority_Display":"Priority"
+                "Amount_to_Spend":"Amount to Spend (Rs)","Priority_Display":"Priority","Forecast_Range":"Forecast Range","Confidence":"Confidence"
             })
 
             st.dataframe(
-                filtered_reco_display[["Style No","Product","Category","Color","Stock on Hand","Days of Stock Left","Forecast (30 days)","Buffer Stock","Already Ordered","Order This Many","Amount to Spend (Rs)"]].reset_index(drop=True),
+                filtered_reco_display[["Style No","Product","Category","Color","Stock on Hand","Days of Stock Left","Forecast (30 days)","Forecast Range","Confidence","Buffer Stock","Already Ordered","Order This Many","Amount to Spend (Rs)"]].reset_index(drop=True),
                 use_container_width=True,
                 column_config={
                     "Amount to Spend (Rs)": st.column_config.NumberColumn(format="Rs %d"),
