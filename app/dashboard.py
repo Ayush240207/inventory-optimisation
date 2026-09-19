@@ -325,6 +325,67 @@ else:
                 }
             )
             st.download_button("📥 Download Report", data=to_excel_download(top50), file_name="performance_report.xlsx")
+            st.divider()
+            st.markdown("### 🔍 Estimated Lost Sales — Were You Leaving Money on the Table?")
+            st.caption("Products that may have sold more if they had not run out of stock")
+
+            # Detect stockouts — days where units sold equals units on hand at start
+            # Proxy: if a product sold its entire available stock in a period
+            lost_sales = perf.copy()
+            # Calculate velocity for lost sales
+            vel_temp = sales.groupby("Style_No").agg(
+                Total_Sold_=("Units_Sold","sum"),
+                First_Sale_=("Date_of_Sale","min"),
+                Last_Sale_=("Date_of_Sale","max"),
+            ).reset_index()
+            vel_temp["Selling_Days_"] = ((vel_temp["Last_Sale_"] - vel_temp["First_Sale_"]).dt.days + 1).clip(lower=1)
+            vel_temp["Daily_Sales_Rate"] = (vel_temp["Total_Sold_"] / vel_temp["Selling_Days_"]).round(3)
+            lost_sales = lost_sales.merge(vel_temp[["Style_No","Daily_Sales_Rate"]], on="Style_No", how="left")
+
+            # Estimate stockout days using sell through
+            # If sell through > 90% assume at least some stockout days occurred
+            lost_sales["Stockout_Proxy"] = lost_sales["Sell_Through"] >= 90
+            lost_sales["Est_Stockout_Days"] = np.where(
+                lost_sales["Stockout_Proxy"],
+                ((lost_sales["Sell_Through"] - 90) / 10 * days).clip(upper=days*0.3).round(0),
+                0
+            )
+            lost_sales["Est_Lost_Sales"] = (lost_sales["Est_Stockout_Days"] * lost_sales["Daily_Sales_Rate"]).round(0)
+            lost_sales["Est_True_Demand"] = (lost_sales["Units_Sold"] + lost_sales["Est_Lost_Sales"]).round(0)
+            lost_sales["Lost_Revenue"] = (lost_sales["Est_Lost_Sales"] * lost_sales["Avg_Selling_Price"]).round(0)
+
+            at_risk = lost_sales[lost_sales["Est_Lost_Sales"] > 0].sort_values("Lost_Revenue", ascending=False)
+
+            if len(at_risk) > 0:
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    color_metric(len(at_risk), "Products with Possible Lost Sales", "#EF4444")
+                with col2:
+                    color_metric(f"{at_risk['Est_Lost_Sales'].sum():,.0f}", "Estimated Lost Units", "#F59E0B")
+                with col3:
+                    color_metric(f"Rs {at_risk['Lost_Revenue'].sum():,.0f}", "Estimated Lost Revenue", "#EF4444")
+
+                st.dataframe(
+                    at_risk[["Style_No","Product_Name","Category","Color","Units_Sold","Sell_Through","Est_Stockout_Days","Est_Lost_Sales","Est_True_Demand","Lost_Revenue"]].rename(columns={
+                        "Style_No":"Style No",
+                        "Product_Name":"Product",
+                        "Units_Sold":"Actual Sales",
+                        "Sell_Through":"Sold %",
+                        "Est_Stockout_Days":"Est Stockout Days",
+                        "Est_Lost_Sales":"Est Lost Units",
+                        "Est_True_Demand":"True Demand Est",
+                        "Lost_Revenue":"Est Lost Revenue (Rs)"
+                    }).reset_index(drop=True),
+                    use_container_width=True,
+                    column_config={
+                        "Sold %": st.column_config.NumberColumn(format="%.1f%%"),
+                        "Est Lost Revenue (Rs)": st.column_config.NumberColumn(format="Rs %d"),
+                    }
+                )
+                st.info("💡 These products sold out before the period ended. True demand was likely higher than actual sales. Consider ordering more of these next cycle.")
+            else:
+                st.success("✅ No significant stockouts detected in this period. Your inventory levels appear well managed.")
+
 
         # ── TAB 2 ─────────────────────────────────────
         with tab2:
