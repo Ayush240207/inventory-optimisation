@@ -509,6 +509,85 @@ else:
             )
             st.download_button("📥 Download Order Plan", data=to_excel_download(filtered_reco), file_name="order_plan.xlsx")
 
+            st.divider()
+            st.markdown("### 🔍 Why is this the recommendation?")
+            
+            if len(filtered_reco) > 0:
+                explain_product = st.selectbox(
+                    "Select a product to see the full breakdown",
+                    options=filtered_reco["Style_No"].tolist(),
+                    format_func=lambda x: filtered_reco[filtered_reco["Style_No"]==x]["Product_Name"].values[0] + " (" + x + ")",
+                    key="explain1"
+                )
+                
+                if explain_product is not None:
+                    row = filtered_reco[filtered_reco["Style_No"] == explain_product].iloc[0]
+                    
+                    forecast = int(row["Forecast_30_Days"])
+                    buffer = int(row["Buffer_Stock"])
+                    on_hand = int(row["Units_On_Hand"])
+                    on_order = int(row["Units_On_Order"])
+                    order_qty = int(row["Units_to_Order"])
+                    days_left = int(row["Days_of_Stock_Left"])
+                    lead_time = int(row["Lead_Time"])
+                    amount = int(row["Amount_to_Spend"])
+                    priority = row["Priority"]
+                    product_name = row["Product_Name"]
+                    raw_order = max(forecast + buffer - on_hand - on_order, 0)
+                    
+                    if priority == "Urgent":
+                        urgency_msg = f"Stock will last {days_left} days. Supplier takes {lead_time} days. You will run out before delivery arrives. Order today."
+                        urgency_color = "#EF4444"
+                        urgency_icon = "⚠️"
+                    elif priority == "Soon":
+                        urgency_msg = f"Stock will last {days_left} days. Supplier takes {lead_time} days. Order this week to stay safe."
+                        urgency_color = "#F59E0B"
+                        urgency_icon = "🟡"
+                    else:
+                        urgency_msg = f"Stock will last {days_left} days. Supplier takes {lead_time} days. You have time but plan ahead."
+                        urgency_color = "#10B981"
+                        urgency_icon = "🟢"
+                    
+                    st.markdown(f"""
+                    <div style="background:#1C1C1C; border-radius:12px; padding:24px; border-left:5px solid {urgency_color}; margin-top:16px">
+                        <h3 style="color:#FFFFFF; margin:0 0 16px 0">📦 {product_name} ({explain_product})</h3>
+                        <table style="width:100%; color:#DDDDDD; font-size:15px; border-collapse:collapse">
+                            <tr style="border-bottom:1px solid #333">
+                                <td style="padding:10px 0">Forecast demand (next 30 days)</td>
+                                <td style="text-align:right; color:#4361EE; font-weight:700">{forecast:,} units</td>
+                            </tr>
+                            <tr style="border-bottom:1px solid #333">
+                                <td style="padding:10px 0">+ Buffer stock needed</td>
+                                <td style="text-align:right; color:#10B981; font-weight:700">+ {buffer:,} units</td>
+                            </tr>
+                            <tr style="border-bottom:1px solid #333">
+                                <td style="padding:10px 0">- Stock already on hand</td>
+                                <td style="text-align:right; color:#F59E0B; font-weight:700">- {on_hand:,} units</td>
+                            </tr>
+                            <tr style="border-bottom:1px solid #333">
+                                <td style="padding:10px 0">- Stock already on order</td>
+                                <td style="text-align:right; color:#F59E0B; font-weight:700">- {on_order:,} units</td>
+                            </tr>
+                            <tr style="border-bottom:2px solid #555">
+                                <td style="padding:10px 0">Raw order quantity</td>
+                                <td style="text-align:right; color:#FFFFFF; font-weight:700">{raw_order:,} units</td>
+                            </tr>
+                            <tr>
+                                <td style="padding:12px 0; font-size:18px; font-weight:700; color:#FFFFFF">✅ Final recommendation</td>
+                                <td style="text-align:right; font-size:18px; font-weight:700; color:#FFFFFF">{order_qty:,} units</td>
+                            </tr>
+                        </table>
+                        <div style="margin-top:20px; padding:12px; background:#2A2A2A; border-radius:8px">
+                            <p style="color:#AAAAAA; margin:0 0 6px 0; font-size:12px; text-transform:uppercase; letter-spacing:1px">Why this recommendation</p>
+                            <p style="color:#FFFFFF; margin:0; font-size:15px">{urgency_icon} {urgency_msg}</p>
+                        </div>
+                        <div style="margin-top:12px; padding:12px; background:#2A2A2A; border-radius:8px">
+                            <p style="color:#AAAAAA; margin:0 0 6px 0; font-size:12px; text-transform:uppercase; letter-spacing:1px">Cost of this order</p>
+                            <p style="color:#10B981; margin:0; font-size:22px; font-weight:700">Rs {amount:,}</p>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
     except Exception as e:
         st.error(f"Something went wrong: {str(e)}")
         st.info("Make sure your file has 3 sheets: Product_Master, Sales_History, Current_Inventory")
