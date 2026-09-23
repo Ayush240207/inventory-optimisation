@@ -8,79 +8,168 @@ from datetime import datetime, timedelta
 st.set_page_config(
     page_title="Retail Inventory Optimiser",
     page_icon="🛍️",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="collapsed"
 )
 
-def apply_theme(theme):
-    if theme == "Dark":
-        st.markdown("""
-        <style>
-        .stApp { background-color: #111111; }
-        .main { background-color: #111111; }
-        h1, h2, h3, h4, p, label { color: #FFFFFF !important; }
-        .metric-card {
-            background: #1C1C1C;
-            border-radius: 12px;
-            padding: 20px;
-            text-align: center;
-            margin: 4px;
-            border: 1px solid #2A2A2A;
-        }
-        .metric-value {
-            font-size: 30px;
-            font-weight: 700;
-            margin: 8px 0;
-        }
-        .metric-label {
-            font-size: 12px;
-            color: #AAAAAA;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        div[data-testid="metric-container"] {
-            background: #1C1C1C;
-            border: 1px solid #2A2A2A;
-            border-radius: 12px;
-            padding: 15px;
-        }
-        .stDataFrame { border-radius: 8px; }
-        .stSelectbox label { color: #FFFFFF !important; }
-        .stNumberInput label { color: #FFFFFF !important; }
-        </style>
-        """, unsafe_allow_html=True)
-    else:
-        st.markdown("""
-        <style>
-        .stApp { background-color: #FFFFFF; }
-        .main { background-color: #FFFFFF; }
-        h1, h2, h3, h4, p, label { color: #111111 !important; }
-        .metric-card {
-            background: #F5F5F5;
-            border-radius: 12px;
-            padding: 20px;
-            text-align: center;
-            margin: 4px;
-            border: 1px solid #E0E0E0;
-        }
-        .metric-value {
-            font-size: 30px;
-            font-weight: 700;
-            margin: 8px 0;
-        }
-        .metric-label {
-            font-size: 12px;
-            color: #666666;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        div[data-testid="metric-container"] {
-            background: #F5F5F5;
-            border: 1px solid #E0E0E0;
-            border-radius: 12px;
-            padding: 15px;
-        }
-        </style>
-        """, unsafe_allow_html=True)
+# ── Global styles ─────────────────────────────────────
+st.markdown("""
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+* { font-family: 'Inter', sans-serif !important; }
+
+.stApp { background-color: #0A0A0A; }
+.main { background-color: #0A0A0A; }
+
+/* Hero section */
+.hero {
+    background: linear-gradient(135deg, #0A0A0A 0%, #1a1a2e 50%, #0A0A0A 100%);
+    padding: 80px 40px;
+    text-align: center;
+    border-bottom: 1px solid #222;
+}
+.hero-title {
+    font-size: 64px;
+    font-weight: 900;
+    color: #FFFFFF;
+    line-height: 1.1;
+    margin-bottom: 20px;
+}
+.hero-title span {
+    background: linear-gradient(90deg, #4361EE, #10B981);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.hero-subtitle {
+    font-size: 20px;
+    color: #AAAAAA;
+    max-width: 600px;
+    margin: 0 auto 40px auto;
+    line-height: 1.6;
+}
+
+/* Feature cards */
+.feature-card {
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 16px;
+    padding: 32px 24px;
+    text-align: center;
+    transition: all 0.3s;
+    cursor: pointer;
+    height: 100%;
+}
+.feature-card:hover {
+    border-color: #4361EE;
+    transform: translateY(-4px);
+}
+.feature-icon { font-size: 48px; margin-bottom: 16px; }
+.feature-title { font-size: 20px; font-weight: 700; color: #FFFFFF; margin-bottom: 12px; }
+.feature-desc { font-size: 14px; color: #AAAAAA; line-height: 1.6; }
+
+/* Step cards */
+.step-card {
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+}
+.step-number {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4361EE, #10B981);
+    color: white;
+    font-weight: 700;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px auto;
+}
+.step-title { font-size: 16px; font-weight: 600; color: #FFFFFF; margin-bottom: 8px; }
+.step-desc { font-size: 13px; color: #AAAAAA; }
+
+/* Metric cards */
+.metric-card {
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+}
+.metric-value { font-size: 28px; font-weight: 700; margin: 8px 0; }
+.metric-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 1px; }
+
+/* Section titles */
+.section-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #FFFFFF;
+    margin-bottom: 8px;
+}
+.section-subtitle {
+    font-size: 15px;
+    color: #AAAAAA;
+    margin-bottom: 32px;
+}
+
+/* Tab styling */
+.stTabs [data-baseweb="tab-list"] { gap: 8px; background: transparent; }
+.stTabs [data-baseweb="tab"] {
+    border-radius: 8px;
+    padding: 10px 24px;
+    font-weight: 600;
+    color: #AAAAAA;
+    background: #141414;
+    border: 1px solid #222;
+}
+.stTabs [aria-selected="true"] {
+    background: #4361EE !important;
+    color: #FFFFFF !important;
+    border-color: #4361EE !important;
+}
+
+/* Sidebar */
+.css-1d391kg { background: #0F0F0F; }
+section[data-testid="stSidebar"] { background: #0F0F0F; border-right: 1px solid #222; }
+section[data-testid="stSidebar"] * { color: #FFFFFF !important; }
+
+/* Buttons */
+.stButton button {
+    background: linear-gradient(135deg, #4361EE, #3a0ca3);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    padding: 12px 24px;
+}
+
+/* Dividers */
+hr { border-color: #222 !important; }
+
+/* All text white */
+p, span, label, div { color: #FFFFFF; }
+.stMarkdown p { color: #FFFFFF; }
+h1, h2, h3, h4, h5, h6 { color: #FFFFFF !important; }
+
+div[data-testid="metric-container"] {
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 12px;
+    padding: 15px;
+}
+div[data-testid="metric-container"] label { color: #AAAAAA !important; }
+div[data-testid="metric-container"] [data-testid="stMetricValue"] { color: #FFFFFF !important; }
+
+.stDataFrame { border-radius: 8px; }
+.stSelectbox label { color: #FFFFFF !important; }
+.stNumberInput label { color: #FFFFFF !important; }
+.stFileUploader label { color: #FFFFFF !important; }
+</style>
+""", unsafe_allow_html=True)
 
 def color_metric(value, label, color):
     st.markdown(f"""
@@ -115,7 +204,6 @@ def priority_emoji(priority):
 # ── Sidebar ───────────────────────────────────────────
 with st.sidebar:
     st.markdown("## 🛍️ Retail Inventory Optimiser")
-    st.markdown("*Smart buying decisions for your store*")
     st.divider()
     st.markdown("### 📁 Upload Your Data")
     uploaded_file = st.file_uploader("", type=["xlsx","xls"], label_visibility="collapsed")
@@ -124,9 +212,6 @@ with st.sidebar:
     default_lead_time = st.number_input("Supplier delivery time (days)", min_value=1, max_value=90, value=21)
     default_moq = st.number_input("Minimum order quantity", min_value=1, max_value=500, value=60)
     st.divider()
-    st.markdown("### 🎨 Appearance")
-    theme = st.selectbox("Theme", ["Dark", "Light"], index=0)
-    st.divider()
     st.markdown("### 📥 New here?")
     template_path = "data/raw/retailer_template.xlsx"
     try:
@@ -134,68 +219,195 @@ with st.sidebar:
             st.download_button("⬇️ Download Excel Template", data=f.read(), file_name="retailer_template.xlsx", use_container_width=True)
     except:
         st.info("Template not found")
-
-apply_theme(theme)
+    st.caption("Fill in the template with your store data and upload above")
 
 # ── Landing page ──────────────────────────────────────
 if uploaded_file is None:
-    st.markdown("<h1 style='text-align:center; font-size:48px'>🛍️ Retail Inventory Optimiser</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align:center; font-size:20px; color:#AAAAAA'>Know what to buy, how much, and when — in seconds</p>", unsafe_allow_html=True)
-    st.divider()
+
+    # Hero section
+    st.markdown("""
+    <div class="hero">
+        <div class="hero-title">
+            Stop Guessing.<br>
+            <span>Start Knowing.</span>
+        </div>
+        <div class="hero-subtitle">
+            The smart inventory tool for retail stores. Know exactly what to buy, 
+            how much, and when — backed by data, not gut feel.
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # What do you want to know section
+    st.markdown("""
+    <div style="text-align:center; padding: 20px 0">
+        <div class="section-title">What do you want to know about your store?</div>
+        <div class="section-subtitle">Upload your data and instantly get answers to the questions that matter most</div>
+    </div>
+    """, unsafe_allow_html=True)
 
     col1, col2, col3 = st.columns(3)
     with col1:
-        st.markdown("""<div style="background:#1C1C1C; border-radius:16px; padding:30px; text-align:center; border-left:5px solid #4361EE">
-        <div style="font-size:40px">📊</div>
-        <h3 style="color:#4361EE">Performance</h3>
-        <p style="color:#AAAAAA">See your best and worst selling products. Know what to reorder and what to cut.</p>
-        </div>""", unsafe_allow_html=True)
+        st.markdown("""
+        <div class="feature-card">
+            <div class="feature-icon">📊</div>
+            <div class="feature-title">How is my store performing?</div>
+            <div class="feature-desc">
+                See your top 50 products by revenue and sell through rate. 
+                Identify your winners to reorder and losers to cut. 
+                Understand where your margins are strongest.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
     with col2:
-        st.markdown("""<div style="background:#1C1C1C; border-radius:16px; padding:30px; text-align:center; border-left:5px solid #10B981">
-        <div style="font-size:40px">📦</div>
-        <h3 style="color:#10B981">Inventory</h3>
-        <p style="color:#AAAAAA">See how much stock you have and how many days it will last at current sales rate.</p>
-        </div>""", unsafe_allow_html=True)
+        st.markdown("""
+        <div class="feature-card">
+            <div class="feature-icon">📦</div>
+            <div class="feature-title">What is my stock situation right now?</div>
+            <div class="feature-desc">
+                See exactly how many days of stock you have left for every product. 
+                Know which items are critical before they run out. 
+                Track what is overstocked and tying up your cash.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
     with col3:
-        st.markdown("""<div style="background:#1C1C1C; border-radius:16px; padding:30px; text-align:center; border-left:5px solid #F59E0B">
-        <div style="font-size:40px">🛒</div>
-        <h3 style="color:#F59E0B">Orders</h3>
-        <p style="color:#AAAAAA">Get exact quantities to order for each product with total cost estimates.</p>
-        </div>""", unsafe_allow_html=True)
+        st.markdown("""
+        <div class="feature-card">
+            <div class="feature-icon">🛒</div>
+            <div class="feature-title">What should I order next?</div>
+            <div class="feature-desc">
+                Get exact order quantities for every product. 
+                See the total cost before you commit. 
+                Simulate different scenarios — what if demand goes up 20%?
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
-    st.divider()
-    st.markdown("<h3 style='text-align:center'>👈 Upload your Excel file from the sidebar to get started</h3>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align:center; color:#AAAAAA'>Download the template, fill in your store data, and upload it</p>", unsafe_allow_html=True)
+    st.markdown("<br>", unsafe_allow_html=True)
     st.divider()
 
-    st.markdown("### 📋 What goes in your Excel file?")
+    # Live scenario simulator
+    st.markdown("""
+    <div style="text-align:center; padding: 20px 0">
+        <div class="section-title">🔧 Try a scenario — right now</div>
+        <div class="section-subtitle">See how the tool thinks before you even upload your data</div>
+    </div>
+    """, unsafe_allow_html=True)
+
     col1, col2, col3 = st.columns(3)
     with col1:
-        st.markdown("**Sheet 1 — Your Products**")
-        st.dataframe(pd.DataFrame({
-            "Column": ["Style_No","Article_No","Product_Name","Category","Color","Gender","Cost_Price","MRP","Lead_Time_Days","MOQ"],
-            "Needed": ["✅","✅","✅","✅","⬜","⬜","✅","✅","⬜","⬜"],
-            "Example": ["ST001","ART001","Blue Slim Jeans","Jeans","Blue","Men","450","999","21","60"]
-        }), hide_index=True, use_container_width=True)
+        demo_velocity = st.selectbox("Daily sales rate (units/day)", [1, 2, 5, 10, 20, 50], index=2)
     with col2:
-        st.markdown("**Sheet 2 — Your Sales**")
-        st.dataframe(pd.DataFrame({
-            "Column": ["Style_No","Date_of_Purchase","Date_of_Sale","Units_Bought","Units_Sold","Selling_Price"],
-            "Needed": ["✅","✅","✅","✅","✅","✅"],
-            "Example": ["ST001","2026-01-01","2026-01-15","120","88","899"]
-        }), hide_index=True, use_container_width=True)
+        demo_stock = st.number_input("Current stock on hand", min_value=0, value=45, step=5)
     with col3:
-        st.markdown("**Sheet 3 — Current Stock**")
-        st.dataframe(pd.DataFrame({
-            "Column": ["Style_No","Units_On_Hand","Units_On_Order","Expected_Delivery_Date"],
-            "Needed": ["✅","✅","⬜","⬜"],
-            "Example": ["ST001","45","60","2026-09-05"]
-        }), hide_index=True, use_container_width=True)
+        demo_lead = st.selectbox("Supplier lead time (days)", [7, 14, 21, 30, 45], index=2)
+
+    demo_safety = round(1.65 * (demo_velocity * 0.3) * (demo_lead ** 0.5))
+    demo_reorder = round(demo_velocity * demo_lead + demo_safety)
+    demo_days_left = round(demo_stock / demo_velocity) if demo_velocity > 0 else 999
+    demo_forecast = round(demo_velocity * 30)
+    demo_order = max(60, demo_forecast + demo_safety - demo_stock)
+
+    if demo_days_left < demo_lead:
+        demo_status = "🔴 Critical — Order Today"
+        demo_color = "#EF4444"
+    elif demo_days_left < demo_lead * 1.5:
+        demo_status = "🟡 Warning — Order Soon"
+        demo_color = "#F59E0B"
+    else:
+        demo_status = "🟢 Healthy"
+        demo_color = "#10B981"
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    col1, col2, col3, col4, col5 = st.columns(5)
+    with col1:
+        color_metric(f"{demo_days_left} days", "Stock Will Last", demo_color)
+    with col2:
+        color_metric(f"{demo_reorder} units", "Reorder When Stock Hits", "#4361EE")
+    with col3:
+        color_metric(f"{demo_safety} units", "Buffer Stock Needed", "#F59E0B")
+    with col4:
+        color_metric(f"{demo_forecast} units", "Forecast Next 30 Days", "#AAAAAA")
+    with col5:
+        color_metric(f"{demo_order} units", "Recommended Order", "#10B981")
+
+    st.markdown(f"""
+    <div style="background:#141414; border:1px solid #222; border-left:5px solid {demo_color}; 
+    border-radius:12px; padding:20px; margin-top:16px; text-align:center">
+        <div style="font-size:20px; font-weight:700; color:{demo_color}">{demo_status}</div>
+        <div style="color:#AAAAAA; margin-top:8px; font-size:14px">
+            At {demo_velocity} units/day with {demo_stock} units on hand and {demo_lead} day lead time
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.divider()
+
+    # How it works
+    st.markdown("""
+    <div style="text-align:center; padding: 20px 0">
+        <div class="section-title">How it works</div>
+        <div class="section-subtitle">Three steps to smarter buying decisions</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.markdown("""
+        <div class="step-card">
+            <div class="step-number">1</div>
+            <div class="step-title">Upload Your Data</div>
+            <div class="step-desc">Download our Excel template, fill in your products and sales history, and upload it using the sidebar.</div>
+        </div>
+        """, unsafe_allow_html=True)
+    with col2:
+        st.markdown("""
+        <div class="step-card">
+            <div class="step-number">2</div>
+            <div class="step-title">Get Instant Analysis</div>
+            <div class="step-desc">The tool analyses your sales velocity, stock levels, and demand patterns across your entire catalogue.</div>
+        </div>
+        """, unsafe_allow_html=True)
+    with col3:
+        st.markdown("""
+        <div class="step-card">
+            <div class="step-number">3</div>
+            <div class="step-title">Make Better Decisions</div>
+            <div class="step-desc">See exactly what to order, how much, and when. Simulate scenarios and plan your buying with confidence.</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.divider()
+
+    # Upload CTA
+    st.markdown("""
+    <div style="text-align:center; padding:40px 20px; background:#141414; border-radius:16px; border:1px solid #222; margin-top:20px">
+        <div style="font-size:32px; font-weight:800; color:#FFFFFF; margin-bottom:12px">
+            Ready to take control of your inventory?
+        </div>
+        <div style="color:#AAAAAA; font-size:16px; margin-bottom:24px">
+            Upload your store data from the sidebar to get started
+        </div>
+        <div style="font-size:48px">👈</div>
+        <div style="color:#4361EE; font-weight:600; font-size:16px; margin-top:8px">
+            Upload your Excel file from the sidebar
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
 else:
     try:
         products, sales, inventory = load_data(uploaded_file)
-        sales = sales.merge(products[["Style_No","Product_Name","Category","Color","Gender","Cost_Price","MRP","Lead_Time_Days","MOQ"]], on="Style_No", how="left")
+        sales = sales.merge(
+            products[["Style_No","Product_Name","Category","Color","Gender","Cost_Price","MRP","Lead_Time_Days","MOQ"]],
+            on="Style_No", how="left"
+        )
         sales["Lead_Time_Days"] = sales["Lead_Time_Days"].fillna(default_lead_time)
         sales["MOQ"] = sales["MOQ"].fillna(default_moq)
         sales["Margin_Pct"] = ((sales["Selling_Price"] - sales["Cost_Price"]) / sales["Selling_Price"] * 100).round(1)
@@ -203,14 +415,14 @@ else:
         sales["Profit"] = sales["Units_Sold"] * (sales["Selling_Price"] - sales["Cost_Price"])
         today = sales["Date_of_Sale"].max()
 
-        st.markdown("<h1>🛍️ Your Store Dashboard</h1>", unsafe_allow_html=True)
+        st.markdown("<h1 style='color:#FFFFFF; font-size:36px; font-weight:800'>🛍️ Your Store Dashboard</h1>", unsafe_allow_html=True)
         st.caption(f"📂 {len(products)} products · {len(sales)} sales records · Last sale: {today.strftime('%d %b %Y')}")
 
         tab1, tab2, tab3 = st.tabs(["📊  Performance", "📦  Inventory Status", "🛒  What to Order"])
 
         # ── TAB 1 ─────────────────────────────────────
         with tab1:
-            st.markdown("### 📊 How Is Your Store Doing?")
+            st.markdown("<h3 style='color:#FFFFFF'>📊 How Is Your Store Doing?</h3>", unsafe_allow_html=True)
 
             col1, col2, col3, col4, col5 = st.columns(5)
             with col1:
@@ -312,7 +524,7 @@ else:
                 "Avg_Margin":"Margin %","Discount_Taken":"Discount %","Tag":"Tag"
             })
 
-            st.markdown(f"**Top {min(50, len(top50))} Products**")
+            st.markdown(f"<p style='color:#FFFFFF; font-weight:600'>Top {min(50, len(top50))} Products</p>", unsafe_allow_html=True)
             st.dataframe(
                 top50_display[["Style No","Product","Category","Color","Gender","Units Sold","Sold %","Margin %","Revenue","Profit","Discount %","Tag"]].reset_index(drop=True),
                 use_container_width=True,
@@ -325,14 +537,12 @@ else:
                 }
             )
             st.download_button("📥 Download Report", data=to_excel_download(top50), file_name="performance_report.xlsx")
+
             st.divider()
-            st.markdown("### 🔍 Estimated Lost Sales — Were You Leaving Money on the Table?")
+            st.markdown("<h3 style='color:#FFFFFF'>🔍 Estimated Lost Sales — Were You Leaving Money on the Table?</h3>", unsafe_allow_html=True)
             st.caption("Products that may have sold more if they had not run out of stock")
 
-            # Detect stockouts — days where units sold equals units on hand at start
-            # Proxy: if a product sold its entire available stock in a period
             lost_sales = perf.copy()
-            # Calculate velocity for lost sales
             vel_temp = sales.groupby("Style_No").agg(
                 Total_Sold_=("Units_Sold","sum"),
                 First_Sale_=("Date_of_Sale","min"),
@@ -342,13 +552,10 @@ else:
             vel_temp["Daily_Sales_Rate"] = (vel_temp["Total_Sold_"] / vel_temp["Selling_Days_"]).round(3)
             lost_sales = lost_sales.merge(vel_temp[["Style_No","Daily_Sales_Rate"]], on="Style_No", how="left")
 
-            # Estimate stockout days using sell through
-            # If sell through > 90% assume at least some stockout days occurred
             lost_sales["Stockout_Proxy"] = lost_sales["Sell_Through"] >= 90
             lost_sales["Est_Stockout_Days"] = np.where(
                 lost_sales["Stockout_Proxy"],
-                ((lost_sales["Sell_Through"] - 90) / 10 * days).clip(upper=days*0.3).round(0),
-                0
+                ((lost_sales["Sell_Through"] - 90) / 10 * days).clip(upper=days*0.3).round(0), 0
             )
             lost_sales["Est_Lost_Sales"] = (lost_sales["Est_Stockout_Days"] * lost_sales["Daily_Sales_Rate"]).round(0)
             lost_sales["Est_True_Demand"] = (lost_sales["Units_Sold"] + lost_sales["Est_Lost_Sales"]).round(0)
@@ -367,14 +574,10 @@ else:
 
                 st.dataframe(
                     at_risk[["Style_No","Product_Name","Category","Color","Units_Sold","Sell_Through","Est_Stockout_Days","Est_Lost_Sales","Est_True_Demand","Lost_Revenue"]].rename(columns={
-                        "Style_No":"Style No",
-                        "Product_Name":"Product",
-                        "Units_Sold":"Actual Sales",
-                        "Sell_Through":"Sold %",
-                        "Est_Stockout_Days":"Est Stockout Days",
-                        "Est_Lost_Sales":"Est Lost Units",
-                        "Est_True_Demand":"True Demand Est",
-                        "Lost_Revenue":"Est Lost Revenue (Rs)"
+                        "Style_No":"Style No","Product_Name":"Product",
+                        "Units_Sold":"Actual Sales","Sell_Through":"Sold %",
+                        "Est_Stockout_Days":"Est Stockout Days","Est_Lost_Sales":"Est Lost Units",
+                        "Est_True_Demand":"True Demand Est","Lost_Revenue":"Est Lost Revenue (Rs)"
                     }).reset_index(drop=True),
                     use_container_width=True,
                     column_config={
@@ -384,12 +587,11 @@ else:
                 )
                 st.info("💡 These products sold out before the period ended. True demand was likely higher than actual sales. Consider ordering more of these next cycle.")
             else:
-                st.success("✅ No significant stockouts detected in this period. Your inventory levels appear well managed.")
-
+                st.success("✅ No significant stockouts detected in this period.")
 
         # ── TAB 2 ─────────────────────────────────────
         with tab2:
-            st.markdown("### 📦 Stock Status Right Now")
+            st.markdown("<h3 style='color:#FFFFFF'>📦 Stock Status Right Now</h3>", unsafe_allow_html=True)
 
             velocity = sales.groupby("Style_No").agg(
                 Product_Name=("Product_Name","first"), Category=("Category","first"),
@@ -470,7 +672,7 @@ else:
             })
 
             st.dataframe(
-                filtered_inv_display[["Style No","Product","Category","Color","Stock on Hand","On Order","Expected Delivery","Daily Sales Rate","Days of Stock Left","Stock Value (Rs)"]].reset_index(drop=True),
+                filtered_inv_display[["Style No","Product","Category","Color","Stock on Hand","On Order","Expected Delivery","Daily Sales Rate","Days of Stock Left","Stock Value (Rs)","Status"]].reset_index(drop=True),
                 use_container_width=True,
                 column_config={
                     "Daily Sales Rate": st.column_config.NumberColumn(format="%.2f units/day"),
@@ -482,7 +684,7 @@ else:
 
         # ── TAB 3 ─────────────────────────────────────
         with tab3:
-            st.markdown("### 🛒 What Should You Order?")
+            st.markdown("<h3 style='color:#FFFFFF'>🛒 What Should You Order?</h3>", unsafe_allow_html=True)
 
             col1, col2, col3 = st.columns(3)
             with col1:
@@ -506,10 +708,10 @@ else:
             reco["Forecast_30_Days"] = (reco["Daily_Sales_Rate"] * 30 * (1 + demand_pct)).round(0)
             reco["Forecast_Lower"] = (reco["Forecast_30_Days"] - 1.65 * reco["Std_Daily"] * (30**0.5)).clip(lower=0).round(0)
             reco["Forecast_Upper"] = (reco["Forecast_30_Days"] + 1.65 * reco["Std_Daily"] * (30**0.5)).round(0)
-            reco["CV"] = np.where(reco["Daily_Sales_Rate"] > 0, reco["Std_Daily"] / reco["Daily_Sales_Rate"], 1)
-            reco["Confidence"] = np.where(reco["CV"] < 0.2, "🟢 High", np.where(reco["CV"] < 0.5, "🟡 Medium", "🔴 Low"))
             reco["Forecast_Lower"] = reco["Forecast_Lower"].fillna(0)
             reco["Forecast_Upper"] = reco["Forecast_Upper"].fillna(0)
+            reco["CV"] = np.where(reco["Daily_Sales_Rate"] > 0, reco["Std_Daily"] / reco["Daily_Sales_Rate"], 1)
+            reco["Confidence"] = np.where(reco["CV"] < 0.2, "🟢 High", np.where(reco["CV"] < 0.5, "🟡 Medium", "🔴 Low"))
             reco["Forecast_Range"] = reco["Forecast_Lower"].astype(int).astype(str) + " — " + reco["Forecast_Upper"].astype(int).astype(str) + " units"
             reco["Units_to_Order"] = (reco["Forecast_30_Days"] + reco["Buffer_Stock"] - reco["Units_On_Hand"] - reco["Units_On_Order"]).clip(lower=0)
             reco["Units_to_Order"] = reco[["Units_to_Order","MOQ"]].max(axis=1).round(0)
@@ -561,14 +763,15 @@ else:
 
             filtered_reco_display = filtered_reco.rename(columns={
                 "Style_No":"Style No","Product_Name":"Product",
-                "Units_On_Hand":"Stock on Hand","Days_of_Stock_Left":"Days of Stock Left",
+                "Units_On_Hand":"Units_On_Hand","Days_of_Stock_Left":"Days of Stock Left",
                 "Forecast_30_Days":"Forecast (30 days)","Buffer_Stock":"Buffer Stock",
                 "Units_On_Order":"Already Ordered","Units_to_Order":"Order This Many",
-                "Amount_to_Spend":"Amount to Spend (Rs)","Priority_Display":"Priority","Forecast_Range":"Forecast Range","Confidence":"Confidence"
+                "Amount_to_Spend":"Amount to Spend (Rs)","Priority_Display":"Priority",
+                "Forecast_Range":"Forecast Range","Confidence":"Confidence"
             })
 
             st.dataframe(
-                filtered_reco_display[["Style No","Product","Category","Color","Stock on Hand","Days of Stock Left","Forecast (30 days)","Forecast Range","Confidence","Buffer Stock","Already Ordered","Order This Many","Amount to Spend (Rs)"]].reset_index(drop=True),
+                filtered_reco_display[["Style No","Product","Category","Color","Units_On_Hand","Days of Stock Left","Forecast (30 days)","Forecast Range","Confidence","Buffer Stock","Already Ordered","Order This Many","Amount to Spend (Rs)","Priority"]].reset_index(drop=True),
                 use_container_width=True,
                 column_config={
                     "Amount to Spend (Rs)": st.column_config.NumberColumn(format="Rs %d"),
@@ -578,8 +781,8 @@ else:
             st.download_button("📥 Download Order Plan", data=to_excel_download(filtered_reco), file_name="order_plan.xlsx")
 
             st.divider()
-            st.markdown("### 🔍 Why is this the recommendation?")
-            
+            st.markdown("<h3 style='color:#FFFFFF'>🔍 Why is this the recommendation?</h3>", unsafe_allow_html=True)
+
             if len(filtered_reco) > 0:
                 explain_product = st.selectbox(
                     "Select a product to see the full breakdown",
@@ -587,27 +790,26 @@ else:
                     format_func=lambda x: filtered_reco[filtered_reco["Style_No"]==x]["Product_Name"].values[0] + " (" + x + ")",
                     key="explain1"
                 )
-                
+
                 if explain_product is not None:
                     row = filtered_reco[filtered_reco["Style_No"] == explain_product].iloc[0]
-                    
                     forecast = int(row["Forecast_30_Days"])
                     buffer = int(row["Buffer_Stock"])
                     on_hand = int(row["Units_On_Hand"])
-                    on_order = int(row["Units_On_Order"])
-                    order_qty = int(row["Units_to_Order"])
-                    days_left = int(row["Days_of_Stock_Left"])
+                    on_order = int(row["Already Ordered"])
+                    order_qty = int(row["Order This Many"])
+                    days_left = int(row["Days of Stock Left"])
                     lead_time = int(row["Lead_Time"])
-                    amount = int(row["Amount_to_Spend"])
-                    priority = row["Priority"]
-                    product_name = row["Product_Name"]
+                    amount = int(row["Amount to Spend (Rs)"])
+                    priority_val = row["Priority"]
+                    product_name = row["Product"]
                     raw_order = max(forecast + buffer - on_hand - on_order, 0)
-                    
-                    if priority == "Urgent":
+
+                    if priority_val == "Urgent":
                         urgency_msg = f"Stock will last {days_left} days. Supplier takes {lead_time} days. You will run out before delivery arrives. Order today."
                         urgency_color = "#EF4444"
                         urgency_icon = "⚠️"
-                    elif priority == "Soon":
+                    elif priority_val == "Soon":
                         urgency_msg = f"Stock will last {days_left} days. Supplier takes {lead_time} days. Order this week to stay safe."
                         urgency_color = "#F59E0B"
                         urgency_icon = "🟡"
@@ -615,29 +817,29 @@ else:
                         urgency_msg = f"Stock will last {days_left} days. Supplier takes {lead_time} days. You have time but plan ahead."
                         urgency_color = "#10B981"
                         urgency_icon = "🟢"
-                    
+
                     st.markdown(f"""
-                    <div style="background:#1C1C1C; border-radius:12px; padding:24px; border-left:5px solid {urgency_color}; margin-top:16px">
+                    <div style="background:#141414; border-radius:12px; padding:24px; border-left:5px solid {urgency_color}; margin-top:16px">
                         <h3 style="color:#FFFFFF; margin:0 0 16px 0">📦 {product_name} ({explain_product})</h3>
                         <table style="width:100%; color:#DDDDDD; font-size:15px; border-collapse:collapse">
                             <tr style="border-bottom:1px solid #333">
-                                <td style="padding:10px 0">Forecast demand (next 30 days)</td>
+                                <td style="padding:10px 0; color:#FFFFFF">Forecast demand (next 30 days)</td>
                                 <td style="text-align:right; color:#4361EE; font-weight:700">{forecast:,} units</td>
                             </tr>
                             <tr style="border-bottom:1px solid #333">
-                                <td style="padding:10px 0">+ Buffer stock needed</td>
+                                <td style="padding:10px 0; color:#FFFFFF">+ Buffer stock needed</td>
                                 <td style="text-align:right; color:#10B981; font-weight:700">+ {buffer:,} units</td>
                             </tr>
                             <tr style="border-bottom:1px solid #333">
-                                <td style="padding:10px 0">- Stock already on hand</td>
+                                <td style="padding:10px 0; color:#FFFFFF">- Stock already on hand</td>
                                 <td style="text-align:right; color:#F59E0B; font-weight:700">- {on_hand:,} units</td>
                             </tr>
                             <tr style="border-bottom:1px solid #333">
-                                <td style="padding:10px 0">- Stock already on order</td>
+                                <td style="padding:10px 0; color:#FFFFFF">- Stock already on order</td>
                                 <td style="text-align:right; color:#F59E0B; font-weight:700">- {on_order:,} units</td>
                             </tr>
                             <tr style="border-bottom:2px solid #555">
-                                <td style="padding:10px 0">Raw order quantity</td>
+                                <td style="padding:10px 0; color:#FFFFFF">Raw order quantity</td>
                                 <td style="text-align:right; color:#FFFFFF; font-weight:700">{raw_order:,} units</td>
                             </tr>
                             <tr>
@@ -645,11 +847,11 @@ else:
                                 <td style="text-align:right; font-size:18px; font-weight:700; color:#FFFFFF">{order_qty:,} units</td>
                             </tr>
                         </table>
-                        <div style="margin-top:20px; padding:12px; background:#2A2A2A; border-radius:8px">
+                        <div style="margin-top:20px; padding:12px; background:#1C1C1C; border-radius:8px">
                             <p style="color:#AAAAAA; margin:0 0 6px 0; font-size:12px; text-transform:uppercase; letter-spacing:1px">Why this recommendation</p>
                             <p style="color:#FFFFFF; margin:0; font-size:15px">{urgency_icon} {urgency_msg}</p>
                         </div>
-                        <div style="margin-top:12px; padding:12px; background:#2A2A2A; border-radius:8px">
+                        <div style="margin-top:12px; padding:12px; background:#1C1C1C; border-radius:8px">
                             <p style="color:#AAAAAA; margin:0 0 6px 0; font-size:12px; text-transform:uppercase; letter-spacing:1px">Cost of this order</p>
                             <p style="color:#10B981; margin:0; font-size:22px; font-weight:700">Rs {amount:,}</p>
                         </div>
