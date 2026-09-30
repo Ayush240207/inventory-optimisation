@@ -185,15 +185,7 @@ def to_excel_download(df):
         df.to_excel(writer, index=False)
     return output.getvalue()
 
-def load_data(uploaded_file):
-    products = pd.read_excel(uploaded_file, sheet_name="Product_Master")
-    uploaded_file.seek(0)
-    sales = pd.read_excel(uploaded_file, sheet_name="Sales_History")
-    uploaded_file.seek(0)
-    inventory = pd.read_excel(uploaded_file, sheet_name="Current_Inventory")
-    sales["Date_of_Sale"] = pd.to_datetime(sales["Date_of_Sale"])
-    sales["Date_of_Purchase"] = pd.to_datetime(sales["Date_of_Purchase"])
-    return products, sales, inventory
+from loader import load_data
 
 def status_emoji(status):
     return {"Out of Stock":"🔴 Out of Stock","Critical":"🟠 Critical","Warning":"🟡 Warning","Healthy":"🟢 Healthy","Overstock":"🔵 Overstock"}.get(status, status)
@@ -206,7 +198,7 @@ with st.sidebar:
     st.markdown("## 🛍️ Retail Inventory Optimiser")
     st.divider()
     st.markdown("### 📁 Upload Your Data")
-    uploaded_file = st.file_uploader("", type=["xlsx","xls"], label_visibility="collapsed")
+    uploaded_file = st.file_uploader("", type=["xlsx","xls","csv"], label_visibility="collapsed")
     st.divider()
     st.markdown("### ⚙️ Store Settings")
     default_lead_time = st.number_input("Supplier delivery time (days)", min_value=1, max_value=90, value=21)
@@ -662,7 +654,7 @@ else:
                 filtered_inv = filtered_inv[filtered_inv["Category"] == cat_filter2]
             filtered_inv = filtered_inv.sort_values(sort_inv_map[sort_inv])
 
-            filtered_inv_display = filtered_inv.rename(columns={
+            filtered_inv_display = filtered_inv.drop(columns=["Status"]).rename(columns={
                 "Style_No":"Style No","Product_Name":"Product",
                 "Units_On_Hand":"Stock on Hand","Units_On_Order":"On Order",
                 "Expected_Delivery_Date":"Expected Delivery",
@@ -761,7 +753,7 @@ else:
                 filtered_reco = filtered_reco[filtered_reco["Category"] == cat_filter3]
             filtered_reco = filtered_reco.sort_values(sort_reco_map[sort_reco], ascending=sort_reco != "Priority")
 
-            filtered_reco_display = filtered_reco.rename(columns={
+            filtered_reco_display = filtered_reco.drop(columns=["Priority"]).rename(columns={
                 "Style_No":"Style No","Product_Name":"Product",
                 "Units_On_Hand":"Units_On_Hand","Days_of_Stock_Left":"Days of Stock Left",
                 "Forecast_30_Days":"Forecast (30 days)","Buffer_Stock":"Buffer Stock",
@@ -796,13 +788,13 @@ else:
                     forecast = int(row["Forecast_30_Days"])
                     buffer = int(row["Buffer_Stock"])
                     on_hand = int(row["Units_On_Hand"])
-                    on_order = int(row["Already Ordered"])
-                    order_qty = int(row["Order This Many"])
-                    days_left = int(row["Days of Stock Left"])
+                    on_order = int(row["Units_On_Order"])
+                    order_qty = int(row["Units_to_Order"])
+                    days_left = int(row["Days_of_Stock_Left"])
                     lead_time = int(row["Lead_Time"])
-                    amount = int(row["Amount to Spend (Rs)"])
+                    amount = int(row["Amount_to_Spend"])
                     priority_val = row["Priority"]
-                    product_name = row["Product"]
+                    product_name = row["Product_Name"]
                     raw_order = max(forecast + buffer - on_hand - on_order, 0)
 
                     if priority_val == "Urgent":
@@ -860,7 +852,7 @@ else:
 
     except Exception as e:
         st.error(f"Something went wrong: {str(e)}")
-        st.info("Make sure your file has 3 sheets: Product_Master, Sales_History, Current_Inventory")
+        st.info("Your file needs at least a product code, a sale date and units sold. Download the template for a working example.")
 
 st.divider()
 st.caption("🛍️ Retail Inventory Optimiser | Built with Python & Streamlit")
