@@ -1,0 +1,9 @@
+[theme]
+# The app's custom styling is built for a dark background. Forcing dark here
+# stops visitors whose browser is in light mode getting white boxes with
+# white text.
+base = "dark"
+primaryColor = "#4361EE"
+backgroundColor = "#0A0A0A"
+secondaryBackgroundColor = "#141414"
+textColor = "#FFFFFF"
